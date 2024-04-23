@@ -1,8 +1,4 @@
-use clap:: {
-    //Args, 
-    Parser,
-    //Subcommand
-};
+use clap::Parser;
 
 #[derive(Debug, Parser)]
 #[clap(author, version, about)]
@@ -19,7 +15,7 @@ pub struct TvSeriesRenaimerArgs {
     #[arg(short, long, default_value_t = String::from("recursive"))]
     pub mode: String,
 
-    /// GPT model to use 
+    /// GPT model to use (see https://platform.openai.com/docs/models)
     #[arg(short, long, default_value_t = String::from("gpt-4"))]
     pub gtp_model: String,
 }
