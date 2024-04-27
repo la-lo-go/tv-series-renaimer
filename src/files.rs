@@ -32,19 +32,19 @@ fn organize_videos(videos_paths: Chain<Paths, Paths>) -> FolderAndFiles {
     let mut folders: HashMap<String, Vec<String>> = HashMap::new();
     let re = Regex::new(r#"\\+"#).unwrap();
 
-    for video_path in videos_paths {
-        if let Ok(video_path) = video_path {
-            if let Some(folder) = video_path.parent().and_then(|p| p.to_str()) {
-                let normalized_folder = re.replace_all(&folder, "/").to_string();
+    for video_path in videos_paths.filter_map(|path| path.ok()) {
+        if let Some(parent) = video_path.parent() {
+            if let Some(folder) = parent.to_str() {
+                let normalized_folder = re.replace_all(folder, "/").to_string();
                 let entry = folders.entry(normalized_folder).or_insert_with(Vec::new);
-
+    
                 if let Some(video_path_str) = video_path.to_str() {
-                    let normalized_path = re.replace_all(&video_path_str, "/").to_string();
+                    let normalized_path = re.replace_all(video_path_str, "/").to_string();
                     entry.push(normalized_path);
                 }
             }
         }
-    }
+    }    
 
     FolderAndFiles {
         entries: folders,
