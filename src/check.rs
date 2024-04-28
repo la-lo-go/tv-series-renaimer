@@ -31,9 +31,3 @@ pub fn check_mode(mode: &str) -> bool {
         _ => false,
     }
 }
-
-pub fn print_errors(errors: Vec<String>) {
-    for error in errors {
-        eprintln!("{}", error);
-    }
-}
