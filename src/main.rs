@@ -4,10 +4,10 @@ mod args;
 mod check;
 mod files;
 mod gpt;
+mod prompts;
 
 use args::TvSeriesRenaimerArgs;
 use clap::Parser;
-
 
 fn main() {
     let args = TvSeriesRenaimerArgs::parse();
@@ -18,19 +18,20 @@ fn main() {
     if !errors.is_empty() {
         close_app(1, Some(&errors.join("\n")));
     }
-    
+
     let files = files::find_videos(&args.path);
     if files.entries.is_empty() {
         close_app(1, Some("No video files found in the specified path"));
     }
 
-    println!("Files: {:?}", serde_json::to_string(&files.entries).unwrap());
+    let gpt_request =
+        gpt::construct_gpt_request(&args, prompts::EPISODES_RENAMER.to_string(), files.entries);
 
-    let gpt_request = gpt::construct_gpt_request(&args, files.entries);
+    let gpt_response = gpt::send_gpt_request(gpt_request, &args.key);
 
     // save the request to a file named gpt_request.json
-    let gpt_request_json = serde_json::to_string_pretty(&gpt_request).unwrap();
-    std::fs::write("gpt_request.json", gpt_request_json).unwrap();
+    let gpt_response_json = serde_json::to_string_pretty(&gpt_response).unwrap();
+    std::fs::write("gpt_response.json", gpt_response_json).unwrap();
 }
 
 // add an optional parameter that is the eeror message

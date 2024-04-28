@@ -1,10 +1,10 @@
-use std::collections::HashMap;
-
 use crate::args::TvSeriesRenaimerArgs;
-use crate::files::FolderAndFiles;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value;
+use core::panic;
+use std::collections::HashMap;
+
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -72,7 +72,25 @@ pub struct Usage {
     pub total_tokens: i64,
 }
 
-pub fn construct_gpt_request(args: &TvSeriesRenaimerArgs, files: HashMap<String, Vec<String>>) -> GptRequest {
+#[derive(Debug, Deserialize)]
+pub struct GptErrorResponse {
+    error: GptErrorDetail,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GptErrorDetail {
+    pub message: String,
+    #[serde(rename = "type")]
+    pub type_field: String,
+    pub param: Option<String>,
+    pub code: String,
+}
+
+pub fn construct_gpt_request(
+    args: &TvSeriesRenaimerArgs,
+    prompt: String,
+    files: HashMap<String, Vec<String>>,
+) -> GptRequest {
     let files_json = serde_json::to_string(&files).unwrap();
 
     GptRequest {
@@ -80,34 +98,8 @@ pub fn construct_gpt_request(args: &TvSeriesRenaimerArgs, files: HashMap<String,
         messages: vec![
             Message {
                 role: "system".to_string(),
-                content: r#"I'm going to give you a list of folder and video files paths that are each an episode of a series inside of that folder.\n
-                Your job is to return a JSON with the folder containing the names of the original paths and the paths of the formatted names of each episode.\n
-                The formated episode path will have this structure: "{rest of the path}/{series name} S{Season Number}E{Episode number} ({year})[{Quality}].{extension}". If the year or quality are not defined in the file name do not made it up and do not put anything in there, dont leave any empty square brackets or parentheses.\n
-                The formated Folder Name should be have this structure: "{rest of the path}/S{Season Number}". If you cannot know the season number from the folder original name infer it from the episodes inside.\n
-                The seasons and episodes number must be at least two digits long.\n
-                Response example:\n
-                ```json\n[
-                    "{formated Folder Name}":[
-                        {
-                            "original_path": "{original_path_1}",
-                            "formatted_path":  "{formatted_path_1}"
-                        },
-                        {
-                            "original_path": "{original_path_2}",
-                            "formatted_path":  "{formatted_path_2}"
-                        },
-                        ...
-                        {
-                            "original_path": "{original_path_N-1}",
-                            "formatted_path":  "{formatted_path_N-1}"
-                        },
-                        {
-                            "original_path": "{original_path_N}",
-                            "formatted_path":  "{formatted_path_N}"
-                        }
-                    ]
-                ]
-                ```"#.to_string(),            },
+                content: prompt,
+            },
             Message {
                 role: "user".to_string(),
                 content: files_json.to_string(),
@@ -121,5 +113,87 @@ pub fn construct_gpt_request(args: &TvSeriesRenaimerArgs, files: HashMap<String,
         response_format: ResponseFormat {
             type_field: "json_object".to_string(),
         },
+    }
+}
+
+pub fn send_gpt_request(request: GptRequest, key: &str) -> GptResponse {
+    let client = reqwest::blocking::Client::new();
+    let response = client
+        .post("https://api.openai.com/v1/chat/completions")
+        .header("Authorization", format!("Bearer {}", key))
+        .header("Content-Type", "application/json".to_string())
+        .body(serde_json::to_string(&request).unwrap())
+        .send();
+
+    let response = match response.unwrap().text() {
+        Ok(response) => response,
+        Err(e) => {
+            println!("Error obtaining the request: {}", e);
+            return GptResponse::default();
+        }
+    };
+
+    println!("Response: {}", response);
+
+    let response_result: Result<GptResponse, serde_json::Error> = serde_json::from_str(&response);
+    match response_result {
+        Ok(response) => response,
+        Err(_) => {
+            let response_error: Result<GptErrorResponse, serde_json::Error> = serde_json::from_str(&response);
+            match response_error {
+                Ok(response_error) => {
+                    println!("Error: {}", response_error.error.message);
+                    panic!("Error sending the request");
+                }
+                Err(e) => {
+                    panic!("Error parsing the response: {}", e);
+                }
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // DISCLAMER: Remove this key before pushing to a public repository
+    const KEY: &str = "sk-proj-........";
+    const TEST_GPT: &str = "Return a hello world message, in a json"; // the word "json" must be in the prompt
+
+    #[test]
+    fn test_gpt_request() {
+        let args = TvSeriesRenaimerArgs {
+            key: KEY.to_string(),
+            path: "./".to_string(),        // this is not used in the test
+            mode: "recursive".to_string(), // this is not used in the test
+            gtp_model: "gpt-3.5-turbo".to_string(),
+        };
+
+        let files = HashMap::new();
+        let prompt = TEST_GPT.to_string();
+
+        let request = construct_gpt_request(&args, prompt, files);
+
+        let response = send_gpt_request(request, &args.key);
+        assert!(response.choices.len() > 0);
+    }
+
+    #[test]
+    #[should_panic(expected = "Error sending the request")]
+    fn test_bad_key_gpt_request() {
+        let args = TvSeriesRenaimerArgs {
+            key: "sk-proj-error-key".to_string(),
+            path: "./".to_string(),        // this is not used in the test
+            mode: "recursive".to_string(), // this is not used in the test
+            gtp_model: "gpt-3.5-turbo".to_string(),
+        };
+
+        let files = HashMap::new();
+        let prompt = "This is a test that will fail becouse is a wrong API key (json)".to_string();
+
+        let request = construct_gpt_request(&args, prompt, files);
+
+        send_gpt_request(request, &args.key);
     }
 }
