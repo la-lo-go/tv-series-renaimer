@@ -1,9 +1,11 @@
 
+use std::collections::HashMap;
+
 use inquire::Confirm;
 
-use crate::{files::FolderAndFiles, gpt::GptResponse};
+use crate::gpt::GptResponse;
 
-pub fn accept_files(files: &FolderAndFiles) -> bool {
+pub fn accept_files(files: &HashMap<String, Vec<String>>) -> bool {
     let files_serde = serde_json::to_string_pretty(&files).unwrap();
 
     accept(vec![

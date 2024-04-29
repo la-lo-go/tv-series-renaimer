@@ -25,7 +25,7 @@ fn main() {
         close_app(1, Some("No video files found in the specified path"));
     }
 
-    let menu_response = menu::accept_files(&files);
+    let menu_response = menu::accept_files(&files.entries);
     if !menu_response {
         close_app(0, None);
     }
