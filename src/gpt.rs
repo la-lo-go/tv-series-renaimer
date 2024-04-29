@@ -89,7 +89,7 @@ pub struct GptErrorDetail {
 pub fn construct_gpt_request(
     args: &TvSeriesRenaimerArgs,
     prompt: String,
-    files: HashMap<String, Vec<String>>,
+    files: &HashMap<String, Vec<String>>,
 ) -> GptRequest {
     let files_json = serde_json::to_string(&files).unwrap();
 
@@ -133,8 +133,6 @@ pub fn send_gpt_request(request: GptRequest, key: &str) -> GptResponse {
         }
     };
 
-    println!("Response: {}", response);
-
     let response_result: Result<GptResponse, serde_json::Error> = serde_json::from_str(&response);
     match response_result {
         Ok(response) => response,
@@ -173,7 +171,7 @@ mod tests {
         let files = HashMap::new();
         let prompt = TEST_GPT.to_string();
 
-        let request = construct_gpt_request(&args, prompt, files);
+        let request = construct_gpt_request(&args, prompt, &files);
 
         let response = send_gpt_request(request, &args.key);
         assert!(response.choices.len() > 0);
@@ -192,7 +190,7 @@ mod tests {
         let files = HashMap::new();
         let prompt = "This is a test that will fail becouse is a wrong API key (json)".to_string();
 
-        let request = construct_gpt_request(&args, prompt, files);
+        let request = construct_gpt_request(&args, prompt, &files);
 
         send_gpt_request(request, &args.key);
     }

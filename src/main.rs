@@ -3,6 +3,7 @@
 mod args;
 mod check;
 mod files;
+mod menu;
 mod gpt;
 mod prompts;
 
@@ -24,17 +25,22 @@ fn main() {
         close_app(1, Some("No video files found in the specified path"));
     }
 
+    let menu_response = menu::accept_files(&files);
+    if !menu_response {
+        close_app(0, None);
+    }
+
     let gpt_request =
-        gpt::construct_gpt_request(&args, prompts::EPISODES_RENAMER.to_string(), files.entries);
+        gpt::construct_gpt_request(&args, prompts::EPISODES_RENAMER.to_string(), &files.entries);
 
     let gpt_response = gpt::send_gpt_request(gpt_request, &args.key);
 
-    // save the request to a file named gpt_request.json
-    let gpt_response_json = serde_json::to_string_pretty(&gpt_response).unwrap();
-    std::fs::write("gpt_response.json", gpt_response_json).unwrap();
+    let menu_response = menu::accept_gpt_response(&gpt_response);
+    if !menu_response {
+        close_app(0, None);
+    }
 }
 
-// add an optional parameter that is the eeror message
 fn close_app(code: i32, error_message: Option<&str>) {
     if let Some(msg) = error_message {
         eprintln!("{}", msg);
