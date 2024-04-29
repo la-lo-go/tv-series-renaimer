@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use inquire::Confirm;
 
-use crate::gpt::GptResponse;
+use crate::files::RetrievedFoldersAndFiles;
 
 pub fn accept_files(files: &HashMap<String, Vec<String>>) -> bool {
     let files_serde = serde_json::to_string_pretty(&files).unwrap();
@@ -14,7 +14,7 @@ pub fn accept_files(files: &HashMap<String, Vec<String>>) -> bool {
     ], "Do you want to continue?".to_string())
 }
 
-pub fn accept_gpt_response(gpt_response: &GptResponse) -> bool {
+pub fn accept_gpt_response(gpt_response: &RetrievedFoldersAndFiles) -> bool {
     let gpt_response_serde = serde_json::to_string_pretty(&gpt_response).unwrap();
     
     accept(vec![

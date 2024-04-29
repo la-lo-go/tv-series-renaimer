@@ -34,8 +34,9 @@ fn main() {
         gpt::construct_gpt_request(&args, prompts::EPISODES_RENAMER.to_string(), &files.entries);
 
     let gpt_response = gpt::send_gpt_request(gpt_request, &args.key);
+    let retrieved_files = gpt::parse_gpt_response(gpt_response);
 
-    let menu_response = menu::accept_gpt_response(&gpt_response);
+    let menu_response = menu::accept_gpt_response(&retrieved_files);
     if !menu_response {
         close_app(0, None);
     }

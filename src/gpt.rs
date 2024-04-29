@@ -1,4 +1,5 @@
 use crate::args::TvSeriesRenaimerArgs;
+use crate::files::RetrievedFoldersAndFiles;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value;
@@ -71,6 +72,12 @@ pub struct Usage {
     #[serde(rename = "total_tokens")]
     pub total_tokens: i64,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct GptCompleteResponse {
+    folders: RetrievedFoldersAndFiles,
+}
+
 
 #[derive(Debug, Deserialize)]
 pub struct GptErrorResponse {
@@ -149,6 +156,12 @@ pub fn send_gpt_request(request: GptRequest, key: &str) -> GptResponse {
             }
         }
     }
+}
+
+pub fn parse_gpt_response(response: GptResponse) -> RetrievedFoldersAndFiles {
+    let response_json = response.choices[0].message.content.to_string();
+    let complete_response: GptCompleteResponse = serde_json::from_str(&response_json).expect("Error parsing the response");
+    complete_response.folders
 }
 
 #[cfg(test)]

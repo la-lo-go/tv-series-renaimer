@@ -1,11 +1,32 @@
 use glob::{glob, Paths};
 use regex::Regex;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, iter::Chain};
 
 #[derive(Debug, PartialEq, Serialize)]
 pub struct FolderAndFiles {
     pub entries: HashMap<String, Vec<String>>,
+}
+
+pub type RetrievedFoldersAndFiles = Vec<FormatedStructure>;
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FormatedStructure {
+    #[serde(rename = "previous_folder_name")]
+    pub previous_folder_name: String,
+    #[serde(rename = "formatted_folder_name")]
+    pub formatted_folder_name: String,
+    pub files: Vec<File>,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct File {
+    #[serde(rename = "original_path")]
+    pub original_path: String,
+    #[serde(rename = "formatted_path")]
+    pub formatted_path: String,
 }
 
 /// Retrieves a list of video file paths from the specified directory and its subdirectories.

@@ -6,25 +6,39 @@ The formated episode path will have this structure: "{rest of the path}/{series 
 The formated Folder Name should be have this structure: "{rest of the path}/S{Season Number}". If you cannot know the season number from the folder original name infer it from the episodes inside.\n
 The seasons and episodes number must be at least two digits long.\n
 Response example:\n
-```json\n[
-    "{formated Folder Name}":[
-        {
-            "original_path": "{original_path_1}",
-            "formatted_path":  "{formatted_path_1}"
-        },
-        {
-            "original_path": "{original_path_2}",
-            "formatted_path":  "{formatted_path_2}"
-        },
-        ...
-        {
-            "original_path": "{original_path_N-1}",
-            "formatted_path":  "{formatted_path_N-1}"
-        },
-        {
-            "original_path": "{original_path_N}",
-            "formatted_path":  "{formatted_path_N}"
-        }
-    ]
-]
+```json\n
+{
+    "folders": [
+    {
+        "previous_folder_name": "{previous_folder_name 1}",
+        "formatted_folder_name": "{formatted_folder_name 1}",
+        "files": [
+            {
+                "original_path": "{original_path_1_1}",
+                "formatted_path": "{formatted_path_1_1}"
+            },
+            {
+                "original_path": "{original_path_1_2}",
+                "formatted_path": "{formatted_path_1_2}"
+            },
+            ...
+        ]
+    },
+    {
+        "previous_folder_name": "{previous_folder_name 2}",
+        "formatted_folder_name": "{formatted_folder_name 2}",
+        "files": [
+            {
+                "original_path": "{original_path_2_1}",
+                "formatted_path": "{formatted_path_2_1}"
+            },
+            {
+                "original_path": "{original_path_2_2}",
+                "formatted_path": "{formatted_path_2_2}"
+            },
+            ...
+        ]
+    },
+    ...
+]}
 ```"#;
