@@ -1,7 +1,7 @@
 use glob::{glob, Paths};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, iter::Chain};
+use std::{collections::HashMap, fs, iter::Chain, path};
 
 #[derive(Debug, PartialEq, Serialize)]
 pub struct FolderAndFiles {
@@ -13,20 +13,20 @@ pub type RetrievedFoldersAndFiles = Vec<FormatedStructure>;
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FormatedStructure {
-    #[serde(rename = "previous_folder_name")]
-    pub previous_folder_name: String,
-    #[serde(rename = "formatted_folder_name")]
-    pub formatted_folder_name: String,
+    #[serde(rename = "original_folder_name")]
+    pub original_folder_name: String,
+    #[serde(rename = "new_folder_name")]
+    pub new_folder_name: String,
     pub files: Vec<File>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct File {
-    #[serde(rename = "original_path")]
-    pub original_path: String,
-    #[serde(rename = "formatted_path")]
-    pub formatted_path: String,
+    #[serde(rename = "original_file_path")]
+    pub original_file_path: String,
+    #[serde(rename = "new_file_path")]
+    pub new_file_path: String,
 }
 
 /// Retrieves a list of video file paths from the specified directory and its subdirectories.
@@ -58,17 +58,35 @@ fn organize_videos(videos_paths: Chain<Paths, Paths>) -> FolderAndFiles {
             if let Some(folder) = parent.to_str() {
                 let normalized_folder = re.replace_all(folder, "/").to_string();
                 let entry = folders.entry(normalized_folder).or_insert_with(Vec::new);
-    
+
                 if let Some(video_path_str) = video_path.to_str() {
                     let normalized_path = re.replace_all(video_path_str, "/").to_string();
                     entry.push(normalized_path);
                 }
             }
         }
-    }    
+    }
 
-    FolderAndFiles {
-        entries: folders,
+    FolderAndFiles { entries: folders }
+}
+
+pub fn rename_files(folders_and_files: RetrievedFoldersAndFiles, path: &str) {
+    for folder in folders_and_files {
+        for file in folder.files {
+            let original_file_path = path::Path::new(path).join(&file.original_file_path);
+            let new_file_path = path::Path::new(path).join(&file.new_file_path);
+
+            if let Some(parent) = new_file_path.parent() {
+                fs::create_dir_all(parent).unwrap();
+            } else {
+                eprintln!("Error: The new file path is invalid");
+            }
+
+            println!("> Renaming file {:?} -> {:?}...", original_file_path, new_file_path);
+            fs::rename(original_file_path, new_file_path).unwrap();
+        }
+
+        println!("Files from folder {:?} have been renamed", folder.original_folder_name);
     }
 }
 
@@ -99,5 +117,61 @@ mod tests {
 
         let result = find_videos(path);
         assert_eq!(result, expected_result);
+    }
+
+    #[test]
+    fn test_rename_files() {
+        let folder_and_files = vec![
+            FormatedStructure {
+                original_folder_name: "files/Mr Robot".to_string(),
+                new_folder_name: "files/Mr Robot/S01/".to_string(),
+                files: vec![
+                    File {
+                        original_file_path: "files/Mr Robot/MrRobot11.mkv".to_string(),
+                        new_file_path: "files/Mr Robot/S01/Mr Robot S01E01.mkv".to_string(),
+                    },
+                    File {
+                        original_file_path: "files/Mr Robot/MrRobot102.mp4".to_string(),
+                        new_file_path: "files/Mr Robot/S01/Mr Robot S01E02.mp4".to_string(),
+                    },
+                ],
+            },
+            FormatedStructure {
+                original_folder_name: "files/Silicon Valley/S01".to_string(),
+                new_folder_name: "files/Silicon Valley/S01".to_string(),
+                files: vec![File {
+                    original_file_path: "files/Silicon Valley/S01/SV0101.mkv".to_string(),
+                    new_file_path: "files/Silicon Valley/S01/Silicon Valley S01E01.mkv".to_string(),
+                }],
+            },
+        ];
+
+        rename_files(folder_and_files.clone(), "test/");
+
+        let new_files = find_videos("test/").entries;
+        assert_eq!(
+            new_files.get("test/files/Mr Robot/S01"),
+            Some(&vec![
+                "test/files/Mr Robot/S01/Mr Robot S01E01.mkv".to_string(),
+                "test/files/Mr Robot/S01/Mr Robot S01E02.mp4".to_string(),
+            ])
+        );
+        assert_eq!(
+            new_files.get("test/files/Silicon Valley/S01"),
+            Some(&vec!["test/files/Silicon Valley/S01/Silicon Valley S01E01.mkv".to_string()])
+        );
+
+        revert_renaming(folder_and_files, "test/");
+    }
+
+    fn revert_renaming(folders_and_files: RetrievedFoldersAndFiles, path: &str){
+        for folder in folders_and_files {
+            for file in folder.files {
+                let original_file_path = path::Path::new(path).join(&file.original_file_path);
+                let new_file_path = path::Path::new(path).join(&file.new_file_path);
+
+                fs::rename(new_file_path, original_file_path).unwrap();
+            }
+        }
     }
 }

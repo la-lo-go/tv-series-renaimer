@@ -10,31 +10,31 @@ Response example:\n
 {
     "folders": [
     {
-        "previous_folder_name": "{previous_folder_name 1}",
-        "formatted_folder_name": "{formatted_folder_name 1}",
+        "original_folder_name": "{original_folder_name 1}",
+        "new_folder_name": "{new_folder_name 1}",
         "files": [
             {
-                "original_path": "{original_path_1_1}",
-                "formatted_path": "{formatted_path_1_1}"
+                "original_file_path": "{original_file_path_1_1}",
+                "new_file_path": "{formatted_path_1_1}"
             },
             {
-                "original_path": "{original_path_1_2}",
-                "formatted_path": "{formatted_path_1_2}"
+                "original_file_path": "{original_file_path_1_2}",
+                "new_file_path": "{formatted_path_1_2}"
             },
             ...
         ]
     },
     {
-        "previous_folder_name": "{previous_folder_name 2}",
-        "formatted_folder_name": "{formatted_folder_name 2}",
+        "original_folder_name": "{original_folder_name 2}",
+        "new_folder_name": "{new_folder_name 2}",
         "files": [
             {
-                "original_path": "{original_path_2_1}",
-                "formatted_path": "{formatted_path_2_1}"
+                "original_file_path": "{original_file_path_2_1}",
+                "new_file_path": "{new_file_path_2_1}"
             },
             {
-                "original_path": "{original_path_2_2}",
-                "formatted_path": "{formatted_path_2_2}"
+                "original_file_path": "{original_file_path_2_2}",
+                "new_file_path": "{new_file_path_2_2}"
             },
             ...
         ]
