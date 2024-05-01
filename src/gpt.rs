@@ -1,11 +1,10 @@
 use crate::args::TvSeriesRenaimerArgs;
 use crate::files::RetrievedFoldersAndFiles;
+use core::panic;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value;
-use core::panic;
 use std::collections::HashMap;
-
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -78,7 +77,6 @@ pub struct GptCompleteResponse {
     folders: RetrievedFoldersAndFiles,
 }
 
-
 #[derive(Debug, Deserialize)]
 pub struct GptErrorResponse {
     error: GptErrorDetail,
@@ -125,6 +123,8 @@ pub fn construct_gpt_request(
 
 pub fn send_gpt_request(request: GptRequest, key: &str) -> GptResponse {
     let client = reqwest::blocking::Client::new();
+
+    println!("Sending the request to the API, this may take a moment...");
     let response = client
         .post("https://api.openai.com/v1/chat/completions")
         .header("Authorization", format!("Bearer {}", key))
@@ -135,7 +135,7 @@ pub fn send_gpt_request(request: GptRequest, key: &str) -> GptResponse {
     let response = match response.unwrap().text() {
         Ok(response) => response,
         Err(e) => {
-            println!("Error obtaining the request: {}", e);
+            eprintln!("Error obtaining the request: {}", e);
             return GptResponse::default();
         }
     };
@@ -144,7 +144,8 @@ pub fn send_gpt_request(request: GptRequest, key: &str) -> GptResponse {
     match response_result {
         Ok(response) => response,
         Err(_) => {
-            let response_error: Result<GptErrorResponse, serde_json::Error> = serde_json::from_str(&response);
+            let response_error: Result<GptErrorResponse, serde_json::Error> =
+                serde_json::from_str(&response);
             match response_error {
                 Ok(response_error) => {
                     println!("Error: {}", response_error.error.message);
@@ -160,7 +161,8 @@ pub fn send_gpt_request(request: GptRequest, key: &str) -> GptResponse {
 
 pub fn parse_gpt_response(response: GptResponse) -> RetrievedFoldersAndFiles {
     let response_json = response.choices[0].message.content.to_string();
-    let complete_response: GptCompleteResponse = serde_json::from_str(&response_json).expect("Error parsing the response");
+    let complete_response: GptCompleteResponse =
+        serde_json::from_str(&response_json).expect("Error parsing the response");
     complete_response.folders
 }
 
