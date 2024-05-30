@@ -1,6 +1,6 @@
 # TV Series RenAImer
 
-AI powered CLI tool for renaming TV series files for better recognition by media players such as Plex, Jellyfin, etc.
+GPT powered CLI tool for renaming TV series files for better recognition by media players such as Plex, Jellyfin, etc.
 
 ## Download
 
@@ -26,7 +26,7 @@ AI powered CLI tool for renaming TV series files for better recognition by media
 | -k, --key       | REQUIRED: GPT API key (get it from <https://platform.openai.com/>)                                                    | None            |
 | -p, --path      | Path to the directory that will be scanned                                                                            | "./"            |
 | -m, --mode      | Mode to run the program in (recursive or single)                                                                      | "recursive"     |
-| -g, --gtp_model | Model to use, must be one with JSON mode enable (<https://platform.openai.com/docs/guides/text-generation/json-mode>) | "gpt-3.5-turbo" |
+| -g, --gtp_model | Model to use, must be one with JSON mode enable (<https://platform.openai.com/docs/guides/text-generation/json-mode>) | "gpt-4o" |
 
 ## Development
 

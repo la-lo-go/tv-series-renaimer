@@ -132,10 +132,16 @@ pub fn send_gpt_request(request: GptRequest, key: &str) -> GptResponse {
         .body(serde_json::to_string(&request).unwrap())
         .send();
 
-    let response = match response.unwrap().text() {
-        Ok(response) => response,
+    let response = match response {
+        Ok(res) => match res.text() {
+            Ok(text) => text,
+            Err(e) => {
+                eprintln!("Error obtaining the response text: {}", e);
+                return GptResponse::default();
+            }
+        },
         Err(e) => {
-            eprintln!("Error obtaining the request: {}", e);
+            eprintln!("Error sending the request: {}", e);
             return GptResponse::default();
         }
     };
@@ -152,7 +158,9 @@ pub fn send_gpt_request(request: GptRequest, key: &str) -> GptResponse {
                     panic!("Error sending the request");
                 }
                 Err(e) => {
-                    panic!("Error parsing the response: {}", e);
+                    println!("Error parsing the response: {}", e);
+                    println!("Response content: {}", response);
+                    panic!("Error parsing the response");
                 }
             }
         }
@@ -180,7 +188,7 @@ mod tests {
             key: KEY.to_string(),
             path: "./".to_string(),        // this is not used in the test
             mode: "recursive".to_string(), // this is not used in the test
-            gtp_model: "gpt-3.5-turbo".to_string(),
+            gtp_model: "gpt-4o".to_string(),
         };
 
         let files = HashMap::new();
@@ -199,7 +207,7 @@ mod tests {
             key: "sk-proj-error-key".to_string(),
             path: "./".to_string(),        // this is not used in the test
             mode: "recursive".to_string(), // this is not used in the test
-            gtp_model: "gpt-3.5-turbo".to_string(),
+            gtp_model: "gpt-4o".to_string(),
         };
 
         let files = HashMap::new();

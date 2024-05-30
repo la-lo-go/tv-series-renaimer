@@ -16,6 +16,6 @@ pub struct TvSeriesRenaimerArgs {
     pub mode: String,
 
     /// GPT model to use, must be one with JSON mode enable (see https://platform.openai.com/docs/guides/text-generation/json-mode)
-    #[arg(short, long, default_value_t = String::from("gpt-3.5-turbo"))]
+    #[arg(short, long, default_value_t = String::from("gpt-4o"))]
     pub gtp_model: String,
 }
